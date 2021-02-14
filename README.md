@@ -23,6 +23,12 @@ These recipes are not ported to the new toolchain yet:
 
 ## Installation & requirements
 
+To install locally from this repo using the pyenv specified in `.python-version`, replacing `3.9.1`
+with whichever host python version you wish to use.
+
+      pyenv virtualenv 3.9.1 kivy-ios
+      pip install -e .
+
 Before we start, we strongly advise to use a Python virtual environment to install Python packages.
 
       python3 -m venv venv
