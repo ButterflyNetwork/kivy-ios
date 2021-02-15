@@ -4,7 +4,7 @@ from os.path import exists
 
 
 class LibffiRecipe(Recipe):
-    version = "3.2.1"
+    version = "3.3"
     url = "https://sourceware.org/pub/libffi/libffi-{version}.tar.gz"
     library = "build/Release-{arch.sdk}/libffi.a"
     include_per_arch = True
@@ -15,12 +15,6 @@ class LibffiRecipe(Recipe):
     def prebuild_arch(self, arch):
         if self.has_marker("patched"):
             return
-        # XCode 10 minimum is 8.0 now.
-        shprint(sh.sed,
-                "-i.bak",
-                "s/-miphoneos-version-min=5.1.1/-miphoneos-version-min=8.0/g",
-                "generate-darwin-source-and-headers.py")
-        self.apply_patch("fix-win32-unreferenced-symbol.patch")
         self.apply_patch("generate-darwin-source-and-headers-python3-items.patch")
         self.set_marker("patched")
 
