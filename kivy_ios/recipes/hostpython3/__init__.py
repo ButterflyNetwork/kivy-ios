@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class Hostpython3Recipe(Recipe):
-    version = "3.8.2"
+    version = "3.9.1"
     url = "https://www.python.org/ftp/python/{version}/Python-{version}.tgz"
     depends = ["hostlibffi", "hostopenssl"]
     optional_depends = []
@@ -21,8 +21,8 @@ class Hostpython3Recipe(Recipe):
 
     def init_with_ctx(self, ctx):
         super().init_with_ctx(ctx)
-        self.set_hostpython(self, "3.8")
-        self.ctx.so_suffix = ".cpython-38m-darwin.so"
+        self.set_hostpython(self, "3.9")
+        self.ctx.so_suffix = ".cpython-39m-darwin.so"
         self.ctx.hostpython = join(self.ctx.dist_dir, "hostpython3", "bin", "python")
         self.ctx.hostpgen = join(self.ctx.dist_dir, "hostpython3", "bin", "pgen")
         logger.info("Global: hostpython located at {}".format(self.ctx.hostpython))
@@ -99,10 +99,10 @@ class Hostpython3Recipe(Recipe):
         sysconfig was overriding our cflags and extensions were failing to build.
         This hack resets the cflags provided by sysconfig.
         """
-        with open(join(self.ctx.dist_dir, "hostpython3", "lib", "python3.8", "distutils", "sysconfig.py"), 'r') as sysconfigfile:
+        with open(join(self.ctx.dist_dir, "hostpython3", "lib", "python3.9", "distutils", "sysconfig.py"), 'r') as sysconfigfile:
             lines = sysconfigfile.readlines()
-        lines[192] = '        cflags = ""\n'
-        with open(join(self.ctx.dist_dir, "hostpython3", "lib", "python3.8", "distutils", "sysconfig.py"), 'w') as sysconfigfile:
+        lines[198] = '        cflags = ""\n'
+        with open(join(self.ctx.dist_dir, "hostpython3", "lib", "python3.9", "distutils", "sysconfig.py"), 'w') as sysconfigfile:
             sysconfigfile.writelines(lines)
 
 
