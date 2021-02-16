@@ -77,7 +77,7 @@ def cache_execution(f):
 
 def remove_junk(d):
     """ Remove unused build artifacts. """
-    exts = (".so.lib", ".so.o", ".sh")
+    exts = (".so.lib", ".so.o")
     for root, dirnames, filenames in walk(d):
         for fn in filenames:
             if fn.endswith(exts):
