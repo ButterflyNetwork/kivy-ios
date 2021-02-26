@@ -1,0 +1,105 @@
+diff --git a/numpy/core/setup.py b/numpy/core/setup.py
+index 2ec5e1a64..68788555b 100644
+--- a/numpy/core/setup.py
++++ b/numpy/core/setup.py
+@@ -827,7 +827,9 @@ def configuration(parent_package='',top_path=None):
+             join('include', 'numpy', 'npy_1_7_deprecated_api.h'),
+             # add library sources as distuils does not consider libraries
+             # dependencies
+-            ] + npymath_sources
++
++            # XXX This breaks for iOS, it results on duplicate symbols
++            ] #+ npymath_sources
+ 
+     multiarray_src = [
+             join('src', 'multiarray', 'abstractdtypes.c'),
+diff --git a/numpy/core/src/common/python_xerbla.c b/numpy/core/src/common/python_xerbla.c
+index fe2f718b2..f896fd112 100644
+--- a/numpy/core/src/common/python_xerbla.c
++++ b/numpy/core/src/common/python_xerbla.c
+@@ -19,7 +19,7 @@
+   info: Number of the invalid parameter.
+ */
+ 
+-CBLAS_INT BLAS_FUNC(xerbla)(char *srname, CBLAS_INT *info)
++CBLAS_INT BLAS_FUNC(custom_xerbla)(char *srname, CBLAS_INT *info)
+ {
+         static const char format[] = "On entry to %.*s" \
+                 " parameter number %d had an illegal value";
+diff --git a/numpy/linalg/lapack_lite/lapack_lite_names.h b/numpy/linalg/lapack_lite/lapack_lite_names.h
+index 08fd7257d..83a0803fe 100644
+--- a/numpy/linalg/lapack_lite/lapack_lite_names.h
++++ b/numpy/linalg/lapack_lite/lapack_lite_names.h
+@@ -427,7 +427,7 @@
+ #define strsm_ BLAS_FUNC(strsm)
+ #define strti2_ BLAS_FUNC(strti2)
+ #define strtri_ BLAS_FUNC(strtri)
+-#define xerbla_ BLAS_FUNC(xerbla)
++#define xerbla_ BLAS_FUNC(custom_xerbla)
+ #define zaxpy_ BLAS_FUNC(zaxpy)
+ #define zcopy_ BLAS_FUNC(zcopy)
+ #define zdotc_ BLAS_FUNC(zdotc)
+diff --git a/numpy/linalg/lapack_lite/python_xerbla.c b/numpy/linalg/lapack_lite/python_xerbla.c
+index fe2f718b2..f896fd112 100644
+--- a/numpy/linalg/lapack_lite/python_xerbla.c
++++ b/numpy/linalg/lapack_lite/python_xerbla.c
+@@ -19,7 +19,7 @@
+   info: Number of the invalid parameter.
+ */
+ 
+-CBLAS_INT BLAS_FUNC(xerbla)(char *srname, CBLAS_INT *info)
++CBLAS_INT BLAS_FUNC(custom_xerbla)(char *srname, CBLAS_INT *info)
+ {
+         static const char format[] = "On entry to %.*s" \
+                 " parameter number %d had an illegal value";
+diff --git a/numpy/linalg/lapack_litemodule.c b/numpy/linalg/lapack_litemodule.c
+index 362a593a6..0bb3f1615 100644
+--- a/numpy/linalg/lapack_litemodule.c
++++ b/numpy/linalg/lapack_litemodule.c
+@@ -65,7 +65,7 @@ extern fortran_int FNAME(zungqr)(fortran_int *m, fortran_int *n, fortran_int *k,
+                           fortran_int *lda, f2c_doublecomplex tau[],
+                           f2c_doublecomplex work[], fortran_int *lwork, fortran_int *info);
+ 
+-extern fortran_int FNAME(xerbla)(char *srname, fortran_int *info);
++extern fortran_int FNAME(custom_xerbla)(char *srname, fortran_int *info);
+ 
+ static PyObject *LapackError;
+ 
+@@ -353,7 +353,7 @@ lapack_lite_xerbla(PyObject *NPY_UNUSED(self), PyObject *args)
+ 
+     NPY_BEGIN_THREADS_DEF;
+     NPY_BEGIN_THREADS;
+-    FNAME(xerbla)("test", &info);
++    FNAME(custom_xerbla)("test", &info);
+     NPY_END_THREADS;
+ 
+     if (PyErr_Occurred()) {
+diff --git a/numpy/linalg/setup.py b/numpy/linalg/setup.py
+index 5c9f2a4cb..812c897c7 100644
+--- a/numpy/linalg/setup.py
++++ b/numpy/linalg/setup.py
+@@ -75,7 +75,9 @@ def configuration(parent_package='', top_path=None):
+     # umath_linalg module
+     config.add_extension(
+         '_umath_linalg',
+-        sources=['umath_linalg.c.src', get_lapack_lite_sources],
++        # XXX This breaks for iOS, it results on duplicate symbols
++        # sources=['umath_linalg.c.src', get_lapack_lite_sources],
++        sources=['umath_linalg.c.src', lambda e, b: []],
+         depends=['lapack_lite/f2c.h'],
+         extra_info=lapack_info,
+         libraries=['npymath'],
+diff --git a/numpy/random/setup.py b/numpy/random/setup.py
+index bfd08e469..f5031be1f 100644
+--- a/numpy/random/setup.py
++++ b/numpy/random/setup.py
+@@ -127,7 +127,8 @@ def configuration(parent_package='', top_path=None):
+     config.add_extension('mtrand',
+                          sources=['mtrand.c',
+                                   'src/legacy/legacy-distributions.c',
+-                                  'src/distributions/distributions.c',
++                                  # XXX This breaks for iOS, it results on duplicate symbols
++                                  # 'src/distributions/distributions.c',
+                                  ],
+                          include_dirs=['.', 'src', 'src/legacy'],
+                          libraries=['m'] if os.name != 'nt' else [],

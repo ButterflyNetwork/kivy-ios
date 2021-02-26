@@ -5,19 +5,18 @@ import shutil
 
 
 class NumpyRecipe(CythonRecipe):
-    version = "1.16.4"
+    version = "1.20.1"
     url = "https://pypi.python.org/packages/source/n/numpy/numpy-{version}.zip"
     library = "libnumpy.a"
-    libraries = ["libnpymath.a", "libnpysort.a"]
+    libraries = ["libnpymath.a", "libnpyrandom.a"]
     include_dir = "numpy/core/include"
-    depends = ["python"]
-    pbx_frameworks = ["Accelerate"]
+    depends = ["hostcython", "python"]
     cythonize = False
 
     def prebuild_arch(self, arch):
         if self.has_marker("patched"):
             return
-        self.apply_patch("numpy-1.16.4.patch")
+        self.apply_patch("numpy-1.20.1.patch")
         self.set_marker("patched")
 
     def get_recipe_env(self, arch):
@@ -26,8 +25,9 @@ class NumpyRecipe(CythonRecipe):
         # compile and execute an empty C to see if the compiler works. This is
         # obviously not working when crosscompiling
         env["CC"] = "{} {}".format(env["CC"], env["CFLAGS"])
-        # Numpy configuration. Don't try to compile anything related to it,
-        # we're going to use the Accelerate framework
+        # Numpy configuration. Disable accelerators and fallback to the
+        # built-in, unoptimized lapack_lite module. We shouldn't use Accelerate
+        # as it is buggy: https://github.com/numpy/numpy/pull/15759
         env["NPYCONFIG"] = "env BLAS=None LAPACK=None ATLAS=None"
         return env
 

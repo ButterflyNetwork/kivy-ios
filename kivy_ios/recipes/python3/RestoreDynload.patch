@@ -1,0 +1,56 @@
+diff --git a/Python/dynload_shlib.c b/Python/dynload_shlib.c
+index 23828898d3..f9bf037df4 100644
+--- a/Python/dynload_shlib.c
++++ b/Python/dynload_shlib.c
+@@ -76,6 +76,15 @@ _PyImport_FindSharedFuncptr(const char *prefix,
+     PyOS_snprintf(funcname, sizeof(funcname),
+                   LEAD_UNDERSCORE "%.20s_%.200s", prefix, shortname);
+ 
++    /* On IOS, dlopen crash as soon as we try to open one of our library.
++     * Instead, we have done a redirection of linking to convert our .so into a
++     * .a.  Then the main executable is linked with theses symbol. So, instead
++     * of trying to dlopen, directly do the dlsym.
++     * -- Mathieu
++     */
++    return (dl_funcptr) dlsym(RTLD_MAIN_ONLY, funcname);
++
++#if 0
+     if (fp != NULL) {
+         int i;
+         struct _Py_stat_struct status;
+@@ -130,4 +139,5 @@ _PyImport_FindSharedFuncptr(const char *prefix,
+         handles[nhandles++].handle = handle;
+     p = (dl_funcptr) dlsym(handle, funcname);
+     return p;
++#endif
+ }
+diff --git a/configure b/configure
+index 3e25ead85e..afa6d0e6dd 100755
+--- a/configure
++++ b/configure
+@@ -11690,10 +11690,6 @@ then
+ 	fi
+ 	;;
+ 	hp*|HP*) DYNLOADFILE="dynload_hpux.o";;
+-	# Disable dynamic loading on iOS
+-	iOS/*) DYNLOADFILE="dynload_stub.o";;
+-	tvOS/*) DYNLOADFILE="dynload_stub.o";;
+-	watchOS/*) DYNLOADFILE="dynload_stub.o";;
+ 	*)
+ 	# use dynload_shlib.c and dlopen() if we have it; otherwise stub
+ 	# out any dynamic loading
+diff --git a/configure.ac b/configure.ac
+index b7ffaa9c47..eca7d4e020 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -3673,10 +3673,6 @@ then
+ 	fi
+ 	;;
+ 	hp*|HP*) DYNLOADFILE="dynload_hpux.o";;
+-	# Disable dynamic loading on iOS
+-	iOS/*) DYNLOADFILE="dynload_stub.o";;
+-	tvOS/*) DYNLOADFILE="dynload_stub.o";;
+-	watchOS/*) DYNLOADFILE="dynload_stub.o";;
+ 	*)
+ 	# use dynload_shlib.c and dlopen() if we have it; otherwise stub
+ 	# out any dynamic loading

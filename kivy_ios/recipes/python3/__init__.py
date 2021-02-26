@@ -29,6 +29,7 @@ class Python3Recipe(Recipe):
         if self.has_marker("patched"):
             return
         self.apply_patch("Python.patch")
+        self.apply_patch("RestoreDynload.patch")
         self.copy_file("Setup.embedded", "Modules/Setup.local")
         self.append_file("Setup.iOS", "Modules/Setup.local")
         self.set_marker("patched")
