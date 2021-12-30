@@ -75,10 +75,18 @@ index 362a593a6..0bb3f1615 100644
  
      if (PyErr_Occurred()) {
 diff --git a/numpy/linalg/setup.py b/numpy/linalg/setup.py
-index 5c9f2a4cb..812c897c7 100644
+index 5c9f2a4cb..dfae8803a 100644
 --- a/numpy/linalg/setup.py
 +++ b/numpy/linalg/setup.py
-@@ -75,7 +75,9 @@ def configuration(parent_package='', top_path=None):
+@@ -49,6 +49,7 @@ def configuration(parent_package='', top_path=None):
+                     # but use the "64_" convention here.
+                     info['define_macros'] = [
+                         ('HAVE_BLAS_ILP64', None),
++                        ('BLAS_SYMBOL_PREFIX', 'custom'), # Ensure symbols don't collide with private Apple APIs
+                         ('BLAS_SYMBOL_SUFFIX', '64_')
+                     ]
+                 self.set_info(**info)
+@@ -75,7 +76,9 @@ def configuration(parent_package='', top_path=None):
      # umath_linalg module
      config.add_extension(
          '_umath_linalg',
