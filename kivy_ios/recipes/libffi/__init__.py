@@ -4,15 +4,14 @@ from os.path import exists
 
 
 class LibffiRecipe(Recipe):
-    version = "3.4.2"
+    version = "3.4.4"
     url = "https://github.com/libffi/libffi/releases/download/v{version}/libffi-{version}.tar.gz"
-    library = "build/Release-{arch.sdk}/libffi.a"
-    include_per_arch = True
-    include_dir = "build_{arch.sdk}-{arch.arch}/include"
+    library = "build/Release-{plat.sdk}/libffi.a"
+    include_per_platform = True
+    include_dir = "build_{plat.name}/include"
     include_name = "ffi"
-    archs = ["x86_64", "arm64"]
 
-    def prebuild_arch(self, arch):
+    def prebuild_platform(self, plat):
         if self.has_marker("patched"):
             return
         self.apply_patch("enable-tramp-build.patch")
@@ -26,7 +25,7 @@ class LibffiRecipe(Recipe):
                 "generate-darwin-source-and-headers.py")
         self.set_marker("patched")
 
-    def build_arch(self, arch):
+    def build_platform(self, plat):
         if exists("generate-darwin-source-and-headers.py"):
             shprint(
                 sh.mv,
@@ -37,9 +36,9 @@ class LibffiRecipe(Recipe):
         shprint(python3, "_generate-darwin-source-and-headers.py", "--only-ios")
         shprint(sh.xcodebuild, self.ctx.concurrent_xcodebuild,
                 "ONLY_ACTIVE_ARCH=NO",
-                "ARCHS={}".format(arch.arch),
+                "ARCHS={}".format(plat.arch),
                 "BITCODE_GENERATION_MODE=bitcode",
-                "-sdk", arch.sdk,
+                "-sdk", plat.sdk,
                 "-project", "libffi.xcodeproj",
                 "-target", "libffi-iOS",
                 "-configuration", "Release")

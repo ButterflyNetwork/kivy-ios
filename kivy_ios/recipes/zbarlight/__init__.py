@@ -12,28 +12,28 @@ class ZbarLightRecipe(Recipe):
     library = "zbarlight.a"
     depends = ['hostpython3', 'python3', 'libzbar']
     pbx_libraries = ["libz", "libbz2", 'libc++', 'libsqlite3', 'CoreMotion']
-    include_per_arch = True
+    include_per_platform = True
 
-    def get_zbar_env(self, arch):
-        build_env = arch.get_env()
+    def get_zbar_env(self, plat):
+        build_env = plat.get_env()
         dest_dir = join(self.ctx.dist_dir, "root", "python")
         build_env["IOSROOT"] = self.ctx.root_dir
-        build_env["IOSSDKROOT"] = arch.sysroot
+        build_env["IOSSDKROOT"] = plat.sysroot
         build_env["LDSHARED"] = join(self.ctx.root_dir, "tools", "liblink")
         build_env["ARM_LD"] = build_env["LD"]
-        build_env["ARCH"] = arch.arch
-        build_env["C_INCLUDE_PATH"] = join(arch.sysroot, "usr", "include")
-        build_env["LIBRARY_PATH"] = join(arch.sysroot, "usr", "lib")
+        build_env["ARCH"] = plat.arch
+        build_env["C_INCLUDE_PATH"] = join(plat.sysroot, "usr", "include")
+        build_env["LIBRARY_PATH"] = join(plat.sysroot, "usr", "lib")
         build_env['PYTHONPATH'] = join(dest_dir, 'lib', 'python3.7', 'site-packages')
         build_env["CFLAGS"] = " ".join([
-            " -I{}".format(join(self.ctx.dist_dir, "include", arch.arch, "libzbar", 'zbar')) +
-            " -arch {}".format(arch.arch)
+            " -I{}".format(join(self.ctx.dist_dir, "include", plat.name, "libzbar", 'zbar')) +
+            " -arch {}".format(plat.arch)
             ])
         build_env['LDFLAGS'] += " -lios -lpython -lzbar"
         return build_env
 
-    def build_arch(self, arch):
-        build_env = self.get_zbar_env(arch)
+    def build_platform(self, plat):
+        build_env = self.get_zbar_env(plat)
         hostpython = sh.Command(self.ctx.hostpython)
         shprint(hostpython, "setup.py", "build",   # noqa: F821
                 _env=build_env)
@@ -41,8 +41,7 @@ class ZbarLightRecipe(Recipe):
         self.biglink()
 
     def install(self):
-        arch = list(self.filtered_archs)[0]
-        build_dir = join(self.get_build_dir(arch.arch), 'build',
+        build_dir = join(self.get_build_dir(list(self.platforms_to_build)[0]), 'build',
                          'lib.macosx-10.13-x86_64-2.7', 'zbarlight')
         dist_dir = join(self.ctx.dist_dir, 'root', 'python3', 'lib',
                         'python3.7', 'site-packages', 'zbarlight')
