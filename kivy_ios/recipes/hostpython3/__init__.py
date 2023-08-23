@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class Hostpython3Recipe(HostRecipe):
-    version = "3.10.10"
+    version = "3.9.1"
     url = "https://www.python.org/ftp/python/{version}/Python-{version}.tgz"
     depends = ["hostopenssl"]
     optional_depends = []
@@ -19,7 +19,7 @@ class Hostpython3Recipe(HostRecipe):
 
     def init_with_ctx(self, ctx):
         super().init_with_ctx(ctx)
-        self.set_hostpython(self, "3.10")
+        self.set_hostpython(self, "3.9")
         self.ctx.so_suffix = ".cpython-310m-darwin.so"
         self.ctx.hostpython = join(self.ctx.dist_dir, "hostpython3", "bin", "python")
         self.ctx.hostpgen = join(self.ctx.dist_dir, "hostpython3", "bin", "pgen")
@@ -33,6 +33,7 @@ class Hostpython3Recipe(HostRecipe):
         if self.has_marker("patched"):
             return
         self.apply_patch("disable_sysconfig_cflags.patch")
+        self.apply_patch("from_pyenv_configure.patch")
         self.copy_file("ModulesSetup", "Modules/Setup.local")
         self.set_marker("patched")
 
@@ -88,7 +89,7 @@ class Hostpython3Recipe(HostRecipe):
             join(self.ctx.dist_dir, "hostpython3", "bin", "python"))
 
         # hostpython3 installs bundled versions of `pip`
-        # and `setuptools` in `lib/python3.10/site-packages`.
+        # and `setuptools` in `lib/python3.9/site-packages`.
         # This is fine, but `setuptools` have a bug that prevents
         # it from working properly when cross-compiling, so we
         # patch it here.
@@ -100,7 +101,7 @@ class Hostpython3Recipe(HostRecipe):
                 self.ctx.dist_dir,
                 "hostpython3",
                 "lib",
-                "python3.10",
+                "python3.9",
                 "site-packages",
                 "setuptools",
             ),

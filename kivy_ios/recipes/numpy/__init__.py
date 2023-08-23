@@ -5,19 +5,18 @@ import shutil
 
 
 class NumpyRecipe(CythonRecipe):
-    version = "1.24.2"
-    url = "https://pypi.python.org/packages/source/n/numpy/numpy-{version}.tar.gz"
+    version = "1.20.2"
+    url = "https://pypi.python.org/packages/source/n/numpy/numpy-{version}.zip"
     library = "libnumpy.a"
     libraries = ["libnpymath.a", "libnpyrandom.a"]
     include_dir = "numpy/core/include"
     depends = ["python"]
-    hostpython_prerequisites = ["Cython"]
+    hostpython_prerequisites = ["Cython==0.29.36"]
     cythonize = False
 
     def prebuild_platform(self, plat):
         if self.has_marker("patched"):
             return
-        self.apply_patch("skip-math-test.patch")
         self.apply_patch("duplicated_symbols.patch")
         self.set_marker("patched")
 
@@ -52,8 +51,6 @@ class NumpyRecipe(CythonRecipe):
         shutil.rmtree(join(dest_dir, "polynomial", "tests"))
         shutil.rmtree(join(dest_dir, "random", "tests"))
         shutil.rmtree(join(dest_dir, "tests"))
-        sh.rm(join(dest_dir, "core", "lib", "libnpymath.a"))
-        sh.rm(join(dest_dir, "random", "lib", "libnpyrandom.a"))
 
 
 recipe = NumpyRecipe()

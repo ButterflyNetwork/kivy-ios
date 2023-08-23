@@ -9,16 +9,16 @@ logger = logging.getLogger(__name__)
 
 
 class Python3Recipe(Recipe):
-    version = "3.10.10"
+    version = "3.9.1"
     url = "https://www.python.org/ftp/python/{version}/Python-{version}.tgz"
     depends = ["hostpython3", "libffi", "openssl"]
-    library = "libpython3.10.a"
+    library = "libpython3.9.a"
     pbx_libraries = ["libz", "libbz2", "libsqlite3"]
 
     def init_with_ctx(self, ctx):
         super().init_with_ctx(ctx)
-        self.set_python(self, "3.10")
-        ctx.python_ver_dir = "python3.10"
+        self.set_python(self, "3.9")
+        ctx.python_ver_dir = "python3.9"
         ctx.python_prefix = join(ctx.dist_dir, "root", "python3")
         ctx.site_packages_dir = join(
             ctx.python_prefix, "lib", ctx.python_ver_dir, "site-packages")
@@ -27,12 +27,11 @@ class Python3Recipe(Recipe):
         # common to all archs
         if self.has_marker("patched"):
             return
-        self.apply_patch("configure.patch")
-        self.apply_patch("posixmodule.patch")
-        self.apply_patch("dynload_shlib.patch")
-        self.apply_patch("ctypes_duplicate.patch")
-        self.copy_file("ModulesSetup", "Modules/Setup.local")
-        self.append_file("ModulesSetup.mobile", "Modules/Setup.local")
+        self.apply_patch("Python.patch")
+        self.apply_patch("RestoreDynload.patch")
+        self.copy_file("Setup.embedded", "Modules/Setup.local")
+        self.append_file("Setup.iOS", "Modules/Setup.local")
+
         self.set_marker("patched")
 
     def postbuild_platform(self, plat):
@@ -60,8 +59,13 @@ class Python3Recipe(Recipe):
                 "LD={}".format(build_env["LD"]),
                 "CFLAGS={}".format(build_env["CFLAGS"].replace("-fembed-bitcode", "")),
                 "LDFLAGS={} -undefined dynamic_lookup".format(build_env["LDFLAGS"]),
-                "ac_cv_file__dev_ptmx=yes",
+                # sem_timedwait set to no as we don't have this in the 16.2 SDK
+                "ac_cv_func_sem_timedwait=no",
+                # These two flags were set back in Krishna's original python-3.9.1 branch.
+                "ac_cv_file__dev_ptmx=no",
                 "ac_cv_file__dev_ptc=no",
+                # These flags were set in the arm64/feat/native-simulator branch.
+                # Checked that most of these are definitely needed.
                 "ac_cv_little_endian_double=yes",
                 "ac_cv_func_memrchr=no",
                 "ac_cv_func_getentropy=no",
@@ -100,9 +104,11 @@ class Python3Recipe(Recipe):
                 "ac_cv_func_splice=no",
                 "ac_cv_func_mremap=no",
                 "--host={}-apple-ios".format(py_arch),
+                # TODO: figure out what this flag is doing and document.
                 "--build=x86_64-apple-darwin",
                 "--prefix={}".format(prefix),
                 "--without-ensurepip",
+                "--without-doc-strings",
                 "--with-system-ffi",
                 "--enable-ipv6",
                 "PYTHON_FOR_BUILD=_PYTHON_PROJECT_BASE=$(abs_builddir) \
@@ -132,9 +138,9 @@ class Python3Recipe(Recipe):
         # platform binaries and configuration
         with cd(join(
                 self.ctx.dist_dir, "root", "python3", "lib",
-                "python3.10", "config-3.10-darwin")):
+                "python3.9", "config-3.9-darwin")):
             sh.rm(
-                "libpython3.10.a",
+                "libpython3.9.a",
                 "python.o",
                 "config.c.in",
                 "makesetup",
@@ -143,11 +149,11 @@ class Python3Recipe(Recipe):
 
         # cleanup pkgconfig and compiled lib
         with cd(join(self.ctx.dist_dir, "root", "python3", "lib")):
-            sh.rm("-rf", "pkgconfig", "libpython3.10.a")
+            sh.rm("-rf", "pkgconfig", "libpython3.9.a")
 
         # cleanup python libraries
         with cd(join(
-                self.ctx.dist_dir, "root", "python3", "lib", "python3.10")):
+                self.ctx.dist_dir, "root", "python3", "lib", "python3.9")):
             sh.rm("-rf", "wsgiref", "curses", "idlelib", "lib2to3",
                   "ensurepip", "turtledemo", "lib-dynload", "venv",
                   "pydoc_data")
@@ -168,13 +174,12 @@ class Python3Recipe(Recipe):
             sh.find(".", "-name", "__pycache__", "-type", "d", "-delete")
 
             # create the lib zip
-            logger.info("Create a python3.10.zip")
-            sh.mv("config-3.10-darwin", "..")
+            logger.info("Create a python3.9.zip")
+            sh.mv("config-3.9-darwin", "..")
             sh.mv("site-packages", "..")
-            sh.zip("-r", "../python310.zip", sh.glob("*"))
+            sh.zip("-r", "../python39.zip", sh.glob("*"))
             sh.rm("-rf", sh.glob("*"))
-            sh.mv("../config-3.10-darwin", ".")
+            sh.mv("../config-3.9-darwin", ".")
             sh.mv("../site-packages", ".")
-
 
 recipe = Python3Recipe()
