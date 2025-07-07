@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 
 
 class Hostpython3Recipe(HostRecipe):
-    version = "3.11.6"
+    version = "3.11.13"
     url = "https://www.python.org/ftp/python/{version}/Python-{version}.tgz"
     depends = ["hostopenssl"]
     optional_depends = []
